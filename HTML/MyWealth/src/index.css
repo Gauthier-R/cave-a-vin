@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Désactive totalement les contours de sélection sur Recharts et ses composants */
+.recharts-wrapper, 
+.recharts-wrapper *, 
+.recharts-surface, 
+.recharts-surface * {
+    outline: none !important;
+    box-shadow: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+/* Supprime la sélection de texte au clic pour un aspect plus "App" */
+.recharts-wrapper {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+button {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Force le tooltip à rester dans les limites visuelles du graphique */
+.recharts-tooltip-wrapper {
+    z-index: 100;
+    pointer-events: none; /* Évite les bugs de clic sur mobile */
+}
+
+
+/* Empêche les graphiques de déborder de leur conteneur */
+.recharts-responsive-container {
+    overflow: visible !important;
+}
+
+/* Optimisation de la zone de légende défilante */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}

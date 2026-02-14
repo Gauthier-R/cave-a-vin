@@ -1,0 +1,18 @@
+{
+  "projects": {
+    "default": "nodejsfinary"
+  },
+  "targets": {
+    "nodejsfinary": {
+      "hosting": {
+        "app-prd": [
+          "mywealth-fr"
+        ],
+        "app-sim": [
+          "nodejsfinary"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
