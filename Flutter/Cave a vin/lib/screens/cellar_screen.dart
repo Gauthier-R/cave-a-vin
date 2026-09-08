@@ -4,6 +4,7 @@ import '../models/wine_bottle.dart';
 import '../services/cellar_service.dart';
 import '../theme/cellar_theme.dart';
 import '../widgets/shelf_card_widget.dart';
+import '../widgets/special_location_card_widget.dart';
 import '../widgets/bottle_detail_sheet.dart';
 import '../widgets/bottle_form_sheet.dart';
 
@@ -19,6 +20,10 @@ class CellarScreen extends StatefulWidget {
 class _CellarScreenState extends State<CellarScreen> {
   final ScrollController _scrollController = ScrollController();
   Timer? _scrollTimer;
+
+  bool _isCaveExpanded = true;
+  bool _isChambreExpanded = true;
+  bool _isGarageExpanded = true;
 
   void _startAutoScroll(double direction) {
     _scrollTimer?.cancel();
@@ -42,6 +47,39 @@ class _CellarScreenState extends State<CellarScreen> {
     _scrollTimer?.cancel();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  Widget _buildSectionHeader(String title, bool isExpanded, VoidCallback onToggle) {
+    return GestureDetector(
+      onTap: onToggle,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: CellarColors.surfaceLight,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: CellarColors.surfaceBorder),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                color: CellarColors.goldLight,
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.5,
+              ),
+            ),
+            Icon(
+              isExpanded ? Icons.expand_less : Icons.expand_more,
+              color: CellarColors.goldLight,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -114,35 +152,60 @@ class _CellarScreenState extends State<CellarScreen> {
             );
           }
 
-          // Les 4 étages : du haut (Étage 4) vers le bas (Étage 1)
           final floors = [4, 3, 2, 1];
 
           return Stack(
             children: [
-              ListView.builder(
+              ListView(
                 controller: _scrollController,
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 80),
-                itemCount: floors.length,
-                itemBuilder: (context, index) {
-                  final floorNumber = floors[index];
-                  final backBottles =
-                      cellar.getBottles(floorNumber, BottleRow.fond);
-                  final frontBottles =
-                      cellar.getBottles(floorNumber, BottleRow.devant);
+                children: [
+                  _buildSectionHeader('CAVE À VIN', _isCaveExpanded, () => setState(() => _isCaveExpanded = !_isCaveExpanded)),
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOutCubic,
+                    alignment: Alignment.topCenter,
+                    child: _isCaveExpanded
+                        ? Column(
+                            children: floors.map((floorNumber) {
+                              final backBottles = cellar.getBottlesInCellar(floorNumber, BottleRow.fond);
+                              final frontBottles = cellar.getBottlesInCellar(floorNumber, BottleRow.devant);
+                              return ShelfCardWidget(
+                                floor: floorNumber,
+                                backRowBottles: backBottles,
+                                frontRowBottles: frontBottles,
+                                onBottleTap: (bottle) => BottleDetailSheet.show(context, bottle),
+                                onAddTap: (floor, row) => BottleFormSheet.show(
+                                  context,
+                                  initialFloor: floor,
+                                  initialRow: row,
+                                ),
+                              );
+                            }).toList(),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
 
-                  return ShelfCardWidget(
-                    floor: floorNumber,
-                    backRowBottles: backBottles,
-                    frontRowBottles: frontBottles,
-                    onBottleTap: (bottle) =>
-                        BottleDetailSheet.show(context, bottle),
-                    onAddTap: (floor, row) => BottleFormSheet.show(
-                      context,
-                      initialFloor: floor,
-                      initialRow: row,
-                    ),
-                  );
-                },
+                  _buildSectionHeader('CHAMBRE', _isChambreExpanded, () => setState(() => _isChambreExpanded = !_isChambreExpanded)),
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOutCubic,
+                    alignment: Alignment.topCenter,
+                    child: _isChambreExpanded
+                        ? const SpecialLocationCardWidget(location: BottleLocation.chambre)
+                        : const SizedBox.shrink(),
+                  ),
+
+                  _buildSectionHeader('GARAGE', _isGarageExpanded, () => setState(() => _isGarageExpanded = !_isGarageExpanded)),
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOutCubic,
+                    alignment: Alignment.topCenter,
+                    child: _isGarageExpanded
+                        ? const SpecialLocationCardWidget(location: BottleLocation.garage)
+                        : const SizedBox.shrink(),
+                  ),
+                ],
               ),
               // Zone de défilement vers le haut
               Positioned(

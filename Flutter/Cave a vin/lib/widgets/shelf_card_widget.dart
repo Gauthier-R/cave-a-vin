@@ -167,11 +167,11 @@ class ShelfCardWidget extends StatelessWidget {
     required VoidCallback onAdd,
   }) {
     return DragTarget<WineBottle>(
-      onWillAcceptWithDetails: (details) => details.data.floor != floor || details.data.row != row,
+      onWillAcceptWithDetails: (details) => details.data.floor != floor || details.data.row != row || details.data.location != BottleLocation.cave,
       onAcceptWithDetails: (details) {
         final cellar = Provider.of<CellarService>(context, listen: false);
         final bottle = details.data;
-        cellar.updateBottle(bottle.copyWith(floor: floor, row: row));
+        cellar.updateBottle(bottle.copyWith(location: BottleLocation.cave, floor: floor, row: row));
       },
       builder: (context, candidateData, rejectedData) {
         final isHovered = candidateData.isNotEmpty;

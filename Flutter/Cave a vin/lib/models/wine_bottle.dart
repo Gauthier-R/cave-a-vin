@@ -125,14 +125,45 @@ extension BottleRowExtension on BottleRow {
   }
 }
 
+enum BottleLocation {
+  cave,
+  chambre,
+  garage,
+}
+
+extension BottleLocationExtension on BottleLocation {
+  String get label {
+    switch (this) {
+      case BottleLocation.cave:
+        return 'Cave à vin';
+      case BottleLocation.chambre:
+        return 'Chambre';
+      case BottleLocation.garage:
+        return 'Garage';
+    }
+  }
+
+  String get shortLabel {
+    switch (this) {
+      case BottleLocation.cave:
+        return 'Cave';
+      case BottleLocation.chambre:
+        return 'Chambre';
+      case BottleLocation.garage:
+        return 'Garage';
+    }
+  }
+}
+
 class WineBottle {
   final String id;
   final String name;
   final String appellation;
   final int? vintage;
   final WineType wineType;
-  final int floor; // 1, 2, 3, 4
-  final BottleRow row;
+  final BottleLocation location; // cave, chambre, garage
+  final int floor; // 1, 2, 3, 4 (seulement pour la cave)
+  final BottleRow row; // fond, devant (seulement pour la cave)
   final String? region;
   final int? optimalYear;
   final String? notes;
@@ -148,6 +179,7 @@ class WineBottle {
     this.appellation = '',
     this.vintage,
     this.wineType = WineType.rouge,
+    this.location = BottleLocation.cave,
     required this.floor,
     required this.row,
     this.region,
@@ -166,6 +198,7 @@ class WineBottle {
     String? appellation,
     int? vintage,
     WineType? wineType,
+    BottleLocation? location,
     int? floor,
     BottleRow? row,
     String? region,
@@ -183,6 +216,7 @@ class WineBottle {
       appellation: appellation ?? this.appellation,
       vintage: vintage ?? this.vintage,
       wineType: wineType ?? this.wineType,
+      location: location ?? this.location,
       floor: floor ?? this.floor,
       row: row ?? this.row,
       region: region ?? this.region,
@@ -203,6 +237,7 @@ class WineBottle {
       'appellation': appellation,
       'vintage': vintage,
       'wineType': wineType.name,
+      'location': location.name,
       'floor': floor,
       'row': row.name,
       'region': region,
@@ -225,6 +260,10 @@ class WineBottle {
       wineType: WineType.values.firstWhere(
         (t) => t.name == json['wineType'],
         orElse: () => WineType.rouge,
+      ),
+      location: BottleLocation.values.firstWhere(
+        (l) => l.name == json['location'],
+        orElse: () => BottleLocation.cave, // Cave par défaut pour les anciennes données
       ),
       floor: (json['floor'] as int?) ?? 1,
       row: BottleRow.values.firstWhere(

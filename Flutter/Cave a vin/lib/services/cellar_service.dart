@@ -25,17 +25,31 @@ class CellarService extends ChangeNotifier {
     loadBottles();
   }
 
-  // Obtenir les bouteilles actives d'un étage et d'une rangée spécifique
-  List<WineBottle> getBottles(int floor, BottleRow row) {
+  // Obtenir les bouteilles actives de la CAVE pour un étage et une rangée spécifique
+  List<WineBottle> getBottlesInCellar(int floor, BottleRow row) {
     return _bottles
-        .where((b) => !b.isConsumed && b.floor == floor && b.row == row)
+        .where((b) => !b.isConsumed && b.location == BottleLocation.cave && b.floor == floor && b.row == row)
         .toList();
   }
 
-  // Nombre total de bouteilles actives sur un étage (fond + devant)
+  // Obtenir les bouteilles actives pour un LIEU spécifique (Chambre / Garage)
+  List<WineBottle> getBottlesInLocation(BottleLocation location) {
+    return _bottles
+        .where((b) => !b.isConsumed && b.location == location)
+        .toList();
+  }
+
+  // Nombre total de bouteilles actives sur un étage (fond + devant) dans la cave
   int countForFloor(int floor) {
     return _bottles
-        .where((b) => !b.isConsumed && b.floor == floor)
+        .where((b) => !b.isConsumed && b.location == BottleLocation.cave && b.floor == floor)
+        .length;
+  }
+
+  // Nombre total de bouteilles actives pour un lieu
+  int countForLocation(BottleLocation location) {
+    return _bottles
+        .where((b) => !b.isConsumed && b.location == location)
         .length;
   }
 
@@ -84,6 +98,7 @@ class CellarService extends ChangeNotifier {
     String appellation = '',
     int? vintage,
     WineType wineType = WineType.rouge,
+    BottleLocation location = BottleLocation.cave,
     required int floor,
     required BottleRow row,
     String? region,
@@ -96,6 +111,7 @@ class CellarService extends ChangeNotifier {
       appellation: appellation.trim(),
       vintage: vintage,
       wineType: wineType,
+      location: location,
       floor: floor,
       row: row,
       region: region?.trim(),
@@ -119,11 +135,16 @@ class CellarService extends ChangeNotifier {
     }
   }
 
-  // Déplacer rapidement une bouteille vers un autre étage / rangée
-  Future<void> moveBottle(String id, int targetFloor, BottleRow targetRow) async {
+  // Déplacer rapidement une bouteille vers un autre lieu / étage / rangée
+  Future<void> moveBottle(String id, {
+    BottleLocation targetLocation = BottleLocation.cave,
+    int targetFloor = 1,
+    BottleRow targetRow = BottleRow.devant,
+  }) async {
     final index = _bottles.indexWhere((b) => b.id == id);
     if (index != -1) {
       _bottles[index] = _bottles[index].copyWith(
+        location: targetLocation,
         floor: targetFloor,
         row: targetRow,
       );

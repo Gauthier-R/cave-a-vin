@@ -6,12 +6,14 @@ import '../theme/cellar_theme.dart';
 
 class BottleFormSheet extends StatefulWidget {
   final WineBottle? bottleToEdit;
+  final BottleLocation? initialLocation;
   final int? initialFloor;
   final BottleRow? initialRow;
 
   const BottleFormSheet({
     super.key,
     this.bottleToEdit,
+    this.initialLocation,
     this.initialFloor,
     this.initialRow,
   });
@@ -19,6 +21,7 @@ class BottleFormSheet extends StatefulWidget {
   static void show(
     BuildContext context, {
     WineBottle? bottleToEdit,
+    BottleLocation? initialLocation,
     int? initialFloor,
     BottleRow? initialRow,
   }) {
@@ -28,6 +31,7 @@ class BottleFormSheet extends StatefulWidget {
       backgroundColor: Colors.transparent,
       builder: (ctx) => BottleFormSheet(
         bottleToEdit: bottleToEdit,
+        initialLocation: initialLocation,
         initialFloor: initialFloor,
         initialRow: initialRow,
       ),
@@ -49,6 +53,7 @@ class _BottleFormSheetState extends State<BottleFormSheet> {
   late TextEditingController _notesController;
 
   late WineType _selectedWineType;
+  late BottleLocation _selectedLocation;
   late int _selectedFloor;
   late BottleRow _selectedRow;
 
@@ -68,6 +73,7 @@ class _BottleFormSheetState extends State<BottleFormSheet> {
     _notesController = TextEditingController(text: b?.notes ?? '');
 
     _selectedWineType = b?.wineType ?? WineType.rouge;
+    _selectedLocation = b?.location ?? widget.initialLocation ?? BottleLocation.cave;
     _selectedFloor = b?.floor ?? widget.initialFloor ?? 2;
     _selectedRow = b?.row ?? widget.initialRow ?? BottleRow.devant;
   }
@@ -96,6 +102,7 @@ class _BottleFormSheetState extends State<BottleFormSheet> {
         appellation: _appellationController.text.trim(),
         vintage: vintageInt,
         wineType: _selectedWineType,
+        location: _selectedLocation,
         floor: _selectedFloor,
         row: _selectedRow,
         region: _regionController.text.trim(),
@@ -109,6 +116,7 @@ class _BottleFormSheetState extends State<BottleFormSheet> {
         appellation: _appellationController.text.trim(),
         vintage: vintageInt,
         wineType: _selectedWineType,
+        location: _selectedLocation,
         floor: _selectedFloor,
         row: _selectedRow,
         region: _regionController.text.trim(),
@@ -272,7 +280,7 @@ class _BottleFormSheetState extends State<BottleFormSheet> {
                 ),
                 const SizedBox(height: 18),
 
-                // Emplacement : Étage & Rangée
+                // Emplacement : Lieu (Cave, Chambre, Garage)
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
@@ -286,7 +294,7 @@ class _BottleFormSheetState extends State<BottleFormSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'EMPLACEMENT DANS LA CAVE',
+                        'LIEU DE STOCKAGE',
                         style: TextStyle(
                           color: CellarColors.goldLight,
                           fontSize: 11.5,
@@ -295,82 +303,126 @@ class _BottleFormSheetState extends State<BottleFormSheet> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      // Étage
+                      // Lieu
                       Row(
-                        children: [
-                          const Text('Étage : ',
-                              style: TextStyle(
-                                  color: CellarColors.textSecondary,
-                                  fontWeight: FontWeight.w600)),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [1, 2, 3, 4].map((f) {
-                                final isSelected = _selectedFloor == f;
-                                return ChoiceChip(
-                                  label: Text('$f'),
-                                  selected: isSelected,
-                                  selectedColor: CellarColors.gold,
-                                  labelStyle: TextStyle(
-                                    color: isSelected
-                                        ? Colors.black
-                                        : CellarColors.textPrimary,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                  onSelected: (selected) {
-                                    if (selected) {
-                                      setState(() => _selectedFloor = f);
-                                    }
-                                  },
-                                );
-                              }).toList(),
+                        children: BottleLocation.values.map((loc) {
+                          final isSelected = _selectedLocation == loc;
+                          return Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                              child: ChoiceChip(
+                                label: Center(child: Text(loc.label)),
+                                selected: isSelected,
+                                selectedColor: CellarColors.gold,
+                                labelStyle: TextStyle(
+                                  color: isSelected
+                                      ? Colors.black
+                                      : CellarColors.textPrimary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                onSelected: (selected) {
+                                  if (selected) {
+                                    setState(() => _selectedLocation = loc);
+                                  }
+                                },
+                              ),
                             ),
-                          ),
-                        ],
+                          );
+                        }).toList(),
                       ),
-                      const SizedBox(height: 10),
-                      // Rangée (Fond / Devant)
-                      Row(
-                        children: [
-                          const Text('Rangée : ',
-                              style: TextStyle(
-                                  color: CellarColors.textSecondary,
-                                  fontWeight: FontWeight.w600)),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Row(
-                              children: [
-                                BottleRow.devant,
-                                BottleRow.fond,
-                              ].map((r) {
-                                final isSelected = _selectedRow == r;
-                                return Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 4.0),
-                                    child: ChoiceChip(
-                                      label: Center(child: Text(r.label)),
-                                      selected: isSelected,
-                                      selectedColor: CellarColors.gold,
-                                      labelStyle: TextStyle(
-                                        color: isSelected
-                                            ? Colors.black
-                                            : CellarColors.textPrimary,
-                                        fontWeight: FontWeight.w700,
+                      
+                      // Si c'est la cave, on affiche l'étage et la rangée de manière animée
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOutCubic,
+                        alignment: Alignment.topCenter,
+                        child: _selectedLocation == BottleLocation.cave
+                            ? Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 16),
+                                  const Divider(color: CellarColors.surfaceBorder),
+                                  const SizedBox(height: 10),
+                                  // Étage
+                                  Row(
+                                    children: [
+                                      const Text('Étage : ',
+                                          style: TextStyle(
+                                              color: CellarColors.textSecondary,
+                                              fontWeight: FontWeight.w600)),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [1, 2, 3, 4].map((f) {
+                                            final isSelected = _selectedFloor == f;
+                                            return ChoiceChip(
+                                              label: Text('$f'),
+                                              selected: isSelected,
+                                              selectedColor: CellarColors.gold,
+                                              labelStyle: TextStyle(
+                                                color: isSelected
+                                                    ? Colors.black
+                                                    : CellarColors.textPrimary,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                              onSelected: (selected) {
+                                                if (selected) {
+                                                  setState(() => _selectedFloor = f);
+                                                }
+                                              },
+                                            );
+                                          }).toList(),
+                                        ),
                                       ),
-                                      onSelected: (selected) {
-                                        if (selected) {
-                                          setState(() => _selectedRow = r);
-                                        }
-                                      },
-                                    ),
+                                    ],
                                   ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                        ],
+                                  const SizedBox(height: 10),
+                                  // Rangée (Fond / Devant)
+                                  Row(
+                                    children: [
+                                      const Text('Rangée : ',
+                                          style: TextStyle(
+                                              color: CellarColors.textSecondary,
+                                              fontWeight: FontWeight.w600)),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Row(
+                                          children: [
+                                            BottleRow.devant,
+                                            BottleRow.fond,
+                                          ].map((r) {
+                                            final isSelected = _selectedRow == r;
+                                            return Expanded(
+                                              child: Padding(
+                                                padding: const EdgeInsets.symmetric(
+                                                    horizontal: 4.0),
+                                                child: ChoiceChip(
+                                                  label: Center(child: Text(r.label)),
+                                                  selected: isSelected,
+                                                  selectedColor: CellarColors.gold,
+                                                  labelStyle: TextStyle(
+                                                    color: isSelected
+                                                        ? Colors.black
+                                                        : CellarColors.textPrimary,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                  onSelected: (selected) {
+                                                    if (selected) {
+                                                      setState(() => _selectedRow = r);
+                                                    }
+                                                  },
+                                                ),
+                                              ),
+                                            );
+                                          }).toList(),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              )
+                            : const SizedBox.shrink(),
                       ),
                     ],
                   ),

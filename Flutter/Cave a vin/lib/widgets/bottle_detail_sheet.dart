@@ -533,8 +533,8 @@ class BottleDetailSheet extends StatelessWidget {
                 onPressed: () {
                   context.read<CellarService>().moveBottle(
                         bottle.id,
-                        targetFloor,
-                        targetRow,
+                        targetFloor: targetFloor,
+                        targetRow: targetRow,
                       );
                   Navigator.pop(dialogCtx);
                   Navigator.pop(context);
